@@ -8,8 +8,9 @@ set -euxo pipefail
 # If you need public access to API server using the servers Public IP adress, change PUBLIC_IP_ACCESS to true.
 
 PUBLIC_IP_ACCESS="false"
+IPADDR="192.168.56.2"
 NODENAME=$(hostname -s)
-POD_CIDR="192.168.0.0/16"
+POD_CIDR="10.244.0.0/16"
 
 # Pull required images
 

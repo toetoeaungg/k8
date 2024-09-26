@@ -38,24 +38,32 @@ sudo sysctl --system
 sudo apt-get update -y
 sudo apt-get install -y apt-transport-https ca-certificates curl gpg
 
-# Install CRI-O Runtime
-sudo apt-get update -y
-sudo apt-get install -y software-properties-common curl apt-transport-https ca-certificates
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/$CRIO_VERSION/deb/Release.key |
-    gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
 
-echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/$CRIO_VERSION/deb/ /" |
-    tee /etc/apt/sources.list.d/cri-o.list
+# Install Containerd
+sudo apt-get install containerd.io
 
-sudo apt-get update -y
-sudo apt-get install -y cri-o
+#Configuring the systemd cgroup driver
+sudo cat > /etc/containerd/config.toml << EOF
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+    SystemdCgroup = true
+EOF
 
-sudo systemctl daemon-reload
-sudo systemctl enable crio --now
-sudo systemctl start crio.service
-
-echo "CRI runtime installed successfully"
+#Restart containerd
+sudo systemctl restart containerd
 
 # Install kubelet, kubectl, and kubeadm
 curl -fsSL https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/Release.key |
