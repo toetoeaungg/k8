@@ -14,14 +14,14 @@ POD_CIDR="10.244.0.0/16"
 
 # Pull required images
 
-# sudo kubeadm config images pull
+#sudo kubeadm config images pull
 
 # Initialize kubeadm based on PUBLIC_IP_ACCESS
 
 if [[ "$PUBLIC_IP_ACCESS" == "false" ]]; then
     
     MASTER_PRIVATE_IP=$(ip addr show eth1 | awk '/inet / {print $2}' | cut -d/ -f1)
-    sudo kubeadm init --apiserver-advertise-address="$MASTER_PRIVATE_IP" --apiserver-cert-extra-sans="$MASTER_PRIVATE_IP" --pod-network-cidr="$POD_CIDR" --node-name "$NODENAME" --ignore-preflight-errors Swap
+    sudo kubeadm init --apiserver-advertise-address="$MASTER_PRIVATE_IP" --apiserver-cert-extra-sans="$MASTER_PRIVATE_IP" --pod-network-cidr="$POD_CIDR" --node-name "$NODENAME" --cri-socket unix:///var/run/containerd/containerd.sock --ignore-preflight-errors Swap
 
 elif [[ "$PUBLIC_IP_ACCESS" == "true" ]]; then
 
@@ -39,6 +39,5 @@ mkdir -p "$HOME"/.kube
 sudo cp -i /etc/kubernetes/admin.conf "$HOME"/.kube/config
 sudo chown "$(id -u)":"$(id -g)" "$HOME"/.kube/config
 
-# Install Claico Network Plugin Network 
-
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+# Install weave Network Plugin Network 
+kubectl apply -f https://reweave.azurewebsites.net/k8s/v1.30/net.yaml
