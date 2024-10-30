@@ -1,0 +1,64 @@
+NUM_MASTER_NODE = 1
+NUM_WORKER_NODE = 2
+
+IP_NW = "192.168.56."
+MASTER_IP_START = 1
+NODE_IP_START = 2
+LB_IP_START = 30
+
+Vagrant.configure("2") do |config|
+
+# Provision Master Nodes
+(1..NUM_MASTER_NODE).each do |i|
+    config.vm.define "master" do |master|
+      master.vm.box = "bento/ubuntu-22.04"
+      master.vm.hostname = "master-node"
+      master.vm.network "private_network", ip: IP_NW + "#{MASTER_IP_START + i}"
+      master.vm.network "public_network", bridge:"Inte(R) Wireless-AC 9462"
+      master.vm.provider "virtualbox" do |vb|
+        vb.name = "master"
+        vb.memory = 4096
+        vb.cpus = 2
+        vb.gui = false
+      end
+
+      master.vm.provision "shell", run: "always", inline: <<-SHELL
+        sudo apt-get update
+        sudo apt-get install net-tools zip curl jq tree unzip wget siege apt-transport-https ca-certificates software-properties-common gnupg lsb-release -y
+        netstat -tunlp
+        echo "Hello from tta-kubeadm-master"
+      SHELL
+
+      #master.vm.provision "shell",
+      #  privileged: true,
+      #  path: './scripts/common.sh'
+    end
+  end
+
+# Provision Worker Nodes
+(1..NUM_WORKER_NODE).each do |i|
+    config.vm.define "node0#{i}" do |node|
+      node.vm.box = "bento/ubuntu-22.04"
+      node.vm.hostname = "worker-node0#{i}"
+      node.vm.network "private_network", ip: IP_NW + "#{NODE_IP_START + i}"
+      node.vm.network "public_network", bridge:"Inte(R) Wireless-AC 9462"
+      node.vm.provider "virtualbox" do |vb|
+        vb.name = "kubenode0#{i}"
+        vb.memory = 2048
+        vb.cpus = 1
+        vb.gui = false
+      end
+
+      node.vm.provision "shell", run: "always", inline: <<-SHELL
+        sudo apt-get update
+        sudo apt-get install net-tools zip curl jq tree unzip wget siege apt-transport-https ca-certificates software-properties-common gnupg lsb-release -y
+        netstat -tunlp
+        echo "Hello from tta-kubeadm-Nodes"
+      SHELL
+
+      #node.vm.provision "shell",
+      #  privileged: true,
+      #  path: './scripts/common.sh'
+    end
+  end
+end
